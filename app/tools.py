@@ -84,6 +84,30 @@ def get_lecture_summary(lecture: int) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def make_quiz(lecture: int) -> str:
+    """指定した回の用語から1つ選び、確認問題と答えを返す。
+
+    「第2回の確認問題を出して」のように、講義内容の復習問題を求められたときに使う。
+    """
+    terms = [term for term in load_glossary() if term["lecture"] == lecture]
+    if not terms:
+        available = sorted({term["lecture"] for term in load_glossary()})
+        lectures = ", ".join(f"第{number}回" for number in available)
+        return json.dumps(
+            {"error": f"第{lecture}回の用語は見つかりません。用語がある回: {lectures}"},
+            ensure_ascii=False,
+        )
+
+    term = random.choice(terms)
+    return json.dumps(
+        {
+            "question": f"「{term['term']}」の意味は？",
+            "answer": term["definition"],
+        },
+        ensure_ascii=False,
+    )
+
+
 def search_materials(query: str) -> str:
     """講義資料をベクトル検索し、回答の根拠になるページを返す。"""
     from app.retrieval import search
